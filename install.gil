@@ -1,0 +1,5 @@
+{
+    "DIR_MACRO": "AWS_UTILS_DIR",
+    "PROJECT_NAME": "awsutils",
+    "BASHRC": "bashrc.sh"
+}
