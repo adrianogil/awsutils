@@ -1,3 +1,4 @@
+
 function aws-cloudformation-describe-stack-get-resource-info() {
     RESOURCE_LOGICAL_ID=$1
     STACK_NAME=$2
