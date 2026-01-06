@@ -1,3 +1,5 @@
+
+# aws-tool aws-profile-set: Set the AWS CLI profile to use.
 function aws-profile-set () {
     target_aws_profile=$1
     if [ -z "$target_aws_profile" ]
@@ -12,6 +14,8 @@ function aws-profile-set () {
 }
 alias aps="aws-profile-set"
 
+
+# aws-tool aws-profile: Display the current AWS profile.
 function aws-profile()
 {
     echo "The current AWS profile is:"
@@ -19,6 +23,8 @@ function aws-profile()
 }
 alias ap="aws-profile"
 
+
+# aws-tool aws-list-profiles: List all AWS CLI profiles from the credentials file.
 function aws-list-profiles()
 {
     awk -F '[][]' '/\[.*\]/ {print $2}' ~/.aws/credentials

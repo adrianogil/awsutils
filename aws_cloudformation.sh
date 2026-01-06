@@ -20,3 +20,10 @@ function aws-cloudformation-describe-stack-get-resource-info() {
       --query "StackResources[?LogicalResourceId=='$RESOURCE_LOGICAL_ID']" --output json)
     echo "$RESULT"
 }
+
+# aws-tool aws-cloudformation-list-stacks: List all CloudFormation stack names.
+function aws-cloudformation-list-stacks() {
+    aws cloudformation describe-stacks \
+        --query "Stacks[].{Name:StackName,Status:StackStatus,LastUpdated:LastUpdatedTime,Created:CreationTime}" \
+        --output table
+}
