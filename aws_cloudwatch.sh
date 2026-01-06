@@ -37,7 +37,7 @@ function aws-cloudwatch-log-group() {
     fi
 
     if [[ -z "$log_stream_name" ]]; then
-        log_stream_name=$(aws logs describe-log-streams --log-group-name "$log_group_name" --query "logStreams[].logStreamName" --output json | jq -r '.[]' | default-fuzzy-finder)
+        log_stream_name=$(aws logs describe-log-streams --log-group-name "$log_group_name" --order-by LastEventTime --descending --max-items 20 --query "logStreams[].logStreamName" --output json | jq -r '.[]' | default-fuzzy-finder)
     fi
 
     if [[ -z "$log_stream_name" ]]; then
