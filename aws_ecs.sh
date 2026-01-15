@@ -6,6 +6,7 @@ function aws-ecs-debug() {
     local container_name="$3"
 
     if [[ -z "$cluster_name" ]]; then
+        echo "Selecting ECS cluster..."
         cluster_name=$(aws ecs list-clusters --query "clusterArns[]" --output json | jq -r '.[]' | default-fuzzy-finder)
     fi
 
@@ -15,16 +16,21 @@ function aws-ecs-debug() {
     fi
 
     if [[ -z "$task_arn" ]]; then
-        local task_arns
-        task_arns=$(aws ecs list-tasks --cluster "$cluster_name" --query "taskArns[]" --output json | jq -r '.[]')
+        echo "Fetching tasks for cluster: $cluster_name"
+        local -a task_arns
+        task_arns=()
+        while IFS= read -r task_arn_line; do
+            [[ -n "$task_arn_line" ]] && task_arns+=("$task_arn_line")
+        done < <(aws ecs list-tasks --cluster "$cluster_name" --query "taskArns[]" --output json | jq -r '.[]')
 
-        if [[ -z "$task_arns" ]]; then
+        if [[ "${#task_arns[@]}" -eq 0 ]]; then
             echo "No running tasks found in cluster: $cluster_name"
             return 1
         fi
 
-        task_arn=$(aws ecs describe-tasks --cluster "$cluster_name" --tasks $task_arns --output json \
-            | jq -r '.tasks[] | .taskDefinitionArn as $def | "\($def | split("/")[-1])\t\(.taskArn)"' \
+        echo "Selecting task (showing task definition name)..."
+        task_arn=$(aws ecs describe-tasks --cluster "$cluster_name" --tasks "${task_arns[@]}" --output json \
+            | jq -r '.tasks[] | .taskDefinitionArn as $task_def | "\($task_def | split("/")[-1])\t\(.taskArn)"' \
             | default-fuzzy-finder \
             | cut -f2)
     fi
@@ -35,6 +41,7 @@ function aws-ecs-debug() {
     fi
 
     if [[ -z "$container_name" ]]; then
+        echo "Selecting container for task: $task_arn"
         container_name=$(aws ecs describe-tasks --cluster "$cluster_name" --tasks "$task_arn" --query "tasks[0].containers[].name" --output json | jq -r '.[]' | default-fuzzy-finder)
     fi
 
@@ -43,6 +50,7 @@ function aws-ecs-debug() {
         return 1
     fi
 
+    echo "Starting ECS execute-command..."
     aws ecs execute-command \
         --cluster "$cluster_name" \
         --task "$task_arn" \
