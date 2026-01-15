@@ -6,6 +6,7 @@ source ${AWS_UTILS_DIR}/aws_codepipeline.sh
 source ${AWS_UTILS_DIR}/aws_ssm.sh
 source ${AWS_UTILS_DIR}/aws_cloudwatch.sh
 source ${AWS_UTILS_DIR}/aws_ecr.sh
+source ${AWS_UTILS_DIR}/aws_ecs.sh
 
 function aws-fz()
 {
