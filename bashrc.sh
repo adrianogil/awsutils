@@ -5,6 +5,7 @@ source ${AWS_UTILS_DIR}/aws_role.sh
 source ${AWS_UTILS_DIR}/aws_codepipeline.sh
 source ${AWS_UTILS_DIR}/aws_ssm.sh
 source ${AWS_UTILS_DIR}/aws_cloudwatch.sh
+source ${AWS_UTILS_DIR}/aws_s3.sh
 source ${AWS_UTILS_DIR}/aws_ecr.sh
 
 function aws-fz()
