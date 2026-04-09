@@ -1,3 +1,6 @@
+# S3 bucket management functions for AWS CLI.
+
+
 # aws-tool aws-s3-bucket-download: Download an S3 bucket locally (choose with fuzzy finder when omitted).
 function aws-s3-bucket-download() {
     local bucket_name="$1"
