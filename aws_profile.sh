@@ -20,7 +20,18 @@ function aws-config-profiles()
 # Select an AWS CLI profile from the config file using the default fuzzy finder.
 function aws-config-profile-select()
 {
-    aws-config-profiles | default-fuzzy-finder
+    if command -v fzf >/dev/null 2>&1; then
+        aws-config-profiles | fzf
+        return
+    fi
+
+    if command -v default-fuzzy-finder >/dev/null 2>&1; then
+        aws-config-profiles | default-fuzzy-finder
+        return
+    fi
+
+    echo "No fuzzy finder found. Install fzf."
+    return 1
 }
 
 # aws-tool aws-profile-set: Set the AWS CLI profile to use.
@@ -114,7 +125,8 @@ function aws-profile-rename()
     fi
 
     if [ -z "$target_profile" ]; then
-        read -r -p "Enter the new profile name: " target_profile
+        printf "Enter the new profile name: "
+        read -r target_profile
     fi
 
     if [ -z "$target_profile" ]; then
