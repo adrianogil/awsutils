@@ -94,3 +94,73 @@ function aws-sts-get-caller-identity()
     aws sts get-caller-identity --profile "$target_aws_profile"
 }
 alias agci="aws-sts-get-caller-identity"
+
+
+# aws-tool aws-profile-rename: Rename an AWS CLI profile in config and credentials files.
+function aws-profile-rename()
+{
+    local source_profile="$1"
+    local target_profile="$2"
+    local aws_config_file="${AWS_CONFIG_FILE:-$HOME/.aws/config}"
+    local aws_credentials_file="${AWS_SHARED_CREDENTIALS_FILE:-$HOME/.aws/credentials}"
+
+    if [ -z "$source_profile" ] || [ -z "$target_profile" ]; then
+        echo "Usage: aws-profile-rename <current-profile-name> <new-profile-name>"
+        return 1
+    fi
+
+    if [ "$source_profile" = "$target_profile" ]; then
+        echo "Source and target profile names are the same"
+        return 1
+    fi
+
+    if ! aws-config-profiles | grep -Fxq "$source_profile"; then
+        echo "Profile '$source_profile' not found in config"
+        return 1
+    fi
+
+    if aws-config-profiles | grep -Fxq "$target_profile"; then
+        echo "Profile '$target_profile' already exists in config"
+        return 1
+    fi
+
+    if [ -f "$aws_config_file" ]; then
+        awk -v source="$source_profile" -v target="$target_profile" '
+            $0 == "[profile " source "]" {
+                print "[profile " target "]"
+                next
+            }
+            source == "default" && $0 == "[default]" {
+                print "[profile " target "]"
+                next
+            }
+            {
+                print
+            }
+        ' "$aws_config_file" > "${aws_config_file}.tmp" && mv "${aws_config_file}.tmp" "$aws_config_file"
+    fi
+
+    if [ -f "$aws_credentials_file" ]; then
+        if grep -Fxq "[$target_profile]" "$aws_credentials_file"; then
+            echo "Profile '$target_profile' already exists in credentials"
+            return 1
+        fi
+
+        awk -v source="$source_profile" -v target="$target_profile" '
+            $0 == "[" source "]" {
+                print "[" target "]"
+                next
+            }
+            {
+                print
+            }
+        ' "$aws_credentials_file" > "${aws_credentials_file}.tmp" && mv "${aws_credentials_file}.tmp" "$aws_credentials_file"
+    fi
+
+    if [ "$AWS_PROFILE" = "$source_profile" ]; then
+        export AWS_PROFILE="$target_profile"
+    fi
+
+    echo "Renamed profile '$source_profile' to '$target_profile'"
+}
+alias apr="aws-profile-rename"
