@@ -104,8 +104,21 @@ function aws-profile-rename()
     local aws_config_file="${AWS_CONFIG_FILE:-$HOME/.aws/config}"
     local aws_credentials_file="${AWS_SHARED_CREDENTIALS_FILE:-$HOME/.aws/credentials}"
 
-    if [ -z "$source_profile" ] || [ -z "$target_profile" ]; then
-        echo "Usage: aws-profile-rename <current-profile-name> <new-profile-name>"
+    if [ -z "$source_profile" ]; then
+        source_profile=$(aws-config-profile-select)
+    fi
+
+    if [ -z "$source_profile" ]; then
+        echo "No AWS profile selected"
+        return 1
+    fi
+
+    if [ -z "$target_profile" ]; then
+        read -r -p "Enter the new profile name: " target_profile
+    fi
+
+    if [ -z "$target_profile" ]; then
+        echo "No new profile name provided"
         return 1
     fi
 
