@@ -189,3 +189,74 @@ function aws-profile-rename()
     echo "Renamed profile '$source_profile' to '$target_profile'"
 }
 alias apr="aws-profile-rename"
+
+
+# aws-tool aws-profile-remove: Remove an AWS CLI profile from config and credentials files.
+function aws-profile-remove()
+{
+    local target_profile="$1"
+    local aws_config_file="${AWS_CONFIG_FILE:-$HOME/.aws/config}"
+    local aws_credentials_file="${AWS_SHARED_CREDENTIALS_FILE:-$HOME/.aws/credentials}"
+    local removed_from_config=0
+    local removed_from_credentials=0
+
+    if [ -z "$target_profile" ]; then
+        target_profile=$(aws-config-profile-select)
+    fi
+
+    if [ -z "$target_profile" ]; then
+        echo "No AWS profile selected"
+        return 1
+    fi
+
+    if [ -f "$aws_config_file" ]; then
+        if [ "$target_profile" = "default" ]; then
+            if grep -Fxq "[default]" "$aws_config_file"; then
+                awk -v profile="$target_profile" '
+                    BEGIN { in_target=0 }
+                    /^\[/ {
+                        in_target = ($0 == "[default]")
+                    }
+                    !in_target { print }
+                ' "$aws_config_file" > "${aws_config_file}.tmp" && mv "${aws_config_file}.tmp" "$aws_config_file"
+                removed_from_config=1
+            fi
+        else
+            if grep -Fxq "[profile $target_profile]" "$aws_config_file"; then
+                awk -v profile="$target_profile" '
+                    BEGIN { in_target=0 }
+                    /^\[/ {
+                        in_target = ($0 == "[profile " profile "]")
+                    }
+                    !in_target { print }
+                ' "$aws_config_file" > "${aws_config_file}.tmp" && mv "${aws_config_file}.tmp" "$aws_config_file"
+                removed_from_config=1
+            fi
+        fi
+    fi
+
+    if [ -f "$aws_credentials_file" ]; then
+        if grep -Fxq "[$target_profile]" "$aws_credentials_file"; then
+            awk -v profile="$target_profile" '
+                BEGIN { in_target=0 }
+                /^\[/ {
+                    in_target = ($0 == "[" profile "]")
+                }
+                !in_target { print }
+            ' "$aws_credentials_file" > "${aws_credentials_file}.tmp" && mv "${aws_credentials_file}.tmp" "$aws_credentials_file"
+            removed_from_credentials=1
+        fi
+    fi
+
+    if [ "$removed_from_config" -eq 0 ] && [ "$removed_from_credentials" -eq 0 ]; then
+        echo "Profile '$target_profile' not found in config or credentials"
+        return 1
+    fi
+
+    if [ "$AWS_PROFILE" = "$target_profile" ]; then
+        unset AWS_PROFILE
+    fi
+
+    echo "Removed profile '$target_profile' from AWS config/credentials"
+}
+alias aprm="aws-profile-remove"
