@@ -189,3 +189,45 @@ function aws-profile-rename()
     echo "Renamed profile '$source_profile' to '$target_profile'"
 }
 alias apr="aws-profile-rename"
+
+
+# aws-tool aws-profile-remove: Remove an AWS CLI profile from the credentials file.
+function aws-profile-remove()
+{
+    local target_profile="$1"
+    local aws_credentials_file="${AWS_SHARED_CREDENTIALS_FILE:-$HOME/.aws/credentials}"
+
+    if [ -z "$target_profile" ]; then
+        target_profile=$(aws-config-profile-select)
+    fi
+
+    if [ -z "$target_profile" ]; then
+        echo "No AWS profile selected"
+        return 1
+    fi
+
+    if [ ! -f "$aws_credentials_file" ]; then
+        echo "Credentials file not found: $aws_credentials_file"
+        return 1
+    fi
+
+    if ! grep -Fxq "[$target_profile]" "$aws_credentials_file"; then
+        echo "Profile '$target_profile' not found in credentials"
+        return 1
+    fi
+
+    awk -v profile="$target_profile" '
+        BEGIN { in_target=0 }
+        /^\[/ {
+            in_target = ($0 == "[" profile "]")
+        }
+        !in_target { print }
+    ' "$aws_credentials_file" > "${aws_credentials_file}.tmp" && mv "${aws_credentials_file}.tmp" "$aws_credentials_file"
+
+    if [ "$AWS_PROFILE" = "$target_profile" ]; then
+        unset AWS_PROFILE
+    fi
+
+    echo "Removed profile '$target_profile' from credentials"
+}
+alias aprm="aws-profile-remove"
