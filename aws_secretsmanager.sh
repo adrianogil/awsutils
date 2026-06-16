@@ -7,11 +7,16 @@ function aws-secretsmanager-secret-search() {
     local filter_key="name"
 
     if [[ -z "$search_term" ]]; then
+        printf "Enter secret search term: "
+        read -r search_term
+    else
+        shift
+    fi
+
+    if [[ -z "$search_term" ]]; then
         echo "Usage: aws-secretsmanager-secret-search <search-term> [name|description|tag-key|tag-value|primary-region|owning-service|all] [aws secretsmanager list-secrets options]"
         return 1
     fi
-
-    shift
 
     if [[ $# -gt 0 ]]; then
         case "$1" in
